@@ -1,0 +1,12 @@
+av==14.4.0
+azure-cognitiveservices-speech==1.45.0
+azure-storage-blob==12.24.0
+google-genai==1.29.0
+numpy==1.26.4
+opencv_python==4.11.0.86
+Pillow==10.4.0
+protobuf==5.28.3
+streamlit==1.38.0
+streamlit_audiorecorder==0.0.6
+streamlit_webrtc==0.63.4
+ultralytics==8.3.174

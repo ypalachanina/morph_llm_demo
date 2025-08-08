@@ -13,7 +13,7 @@ class FrameCaptureProcessor(VideoProcessorBase):
         self.lock = threading.Lock()
         self.run_yolo = run_yolo
         if self.run_yolo:
-            self.yolo_model = YOLO('yolo11m.pt')
+            self.yolo_model = YOLO('yolo11n.pt')
             self.tracker = "bytetrack.yaml"
             self.conf = 0.5
 

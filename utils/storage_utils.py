@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 # CONNECTION_STRING = os.environ.get("CONNECTION_STRING")
 # CONNECTION_STRING = os.getenv("CONNECTION_STRING")
-CONNECTION_STRING = st.secrets("CONNECTION_STRING")
+CONNECTION_STRING = st.secrets["CONNECTION_STRING"]
 
 
 def get_blob_container_client():

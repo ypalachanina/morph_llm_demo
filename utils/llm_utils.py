@@ -6,7 +6,7 @@ import streamlit as st
 
 # GEMINI_KEY = os.environ.get("GEMINI_KEY")
 # GEMINI_KEY = os.getenv("GEMINI_KEY")
-GEMINI_KEY = st.secrets["TTS_KEY"]
+GEMINI_KEY = st.secrets["GEMINI_KEY"]
 client = genai.Client(api_key=GEMINI_KEY)
 
 

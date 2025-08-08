@@ -15,7 +15,7 @@ def init_session(session):
         "video_url": None,
         "mode": "camera",
         "current_frame": None,
-        "run_yolo": True
+        "run_yolo": False
     }
     for k, v in defaults.items():
         if k not in session:

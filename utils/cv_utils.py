@@ -37,7 +37,6 @@ class YOLOModel:
         )
 
     def draw_boxes(self, img, results):
-        img = img.copy()[..., ::-1]
         for box in results.boxes:
             # show bounding boxes
             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
@@ -53,7 +52,7 @@ class YOLOModel:
             (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
             cv2.rectangle(img, (x1, y1 - label_height - 4), (x1 + label_width, y1), color, -1)
             cv2.putText(img, label, (x1, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 1)
-        return img[..., ::-1]
+        return img
 
 
 @st.cache_resource

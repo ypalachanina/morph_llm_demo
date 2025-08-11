@@ -8,11 +8,11 @@ import streamlit as st
 
 
 class YOLOModel:
-    def __init__(self, model_name='yolo11n.pt'):
+    def __init__(self, model_name='yolo11m.pt'):
         self.yolo_model = YOLO(model_name)
         self.tracker = "bytetrack.yaml"
-        self.conf = 0.4
-        self.img_size = 320
+        self.conf = 0.3
+        self.img_size = 640
         self.classes = self.yolo_model.names
         self.colors = self.generate_colors()
 

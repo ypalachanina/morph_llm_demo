@@ -26,7 +26,7 @@ class FrameCaptureProcessor(VideoProcessorBase):
             with self.lock:
                 if self.latest_frame is not None:
                     frame_to_process = self.latest_frame.copy()
-            if frame_to_process:
+            if frame_to_process is not None:
                 try:
                     yolo_results = self.yolo_model.track(frame_to_process)
                     with self.lock:
@@ -42,7 +42,7 @@ class FrameCaptureProcessor(VideoProcessorBase):
         with self.lock:
             self.latest_frame = img.copy()
             boxes = self.latest_boxes
-        if self.yolo_model and boxes:
+        if self.yolo_model and boxes is not None:
             frame_with_boxes = self.yolo_model.draw_boxes(img, boxes)
             frame = av.VideoFrame.from_ndarray(frame_with_boxes, format="bgr24")
         return frame

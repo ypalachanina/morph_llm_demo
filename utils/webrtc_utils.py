@@ -23,10 +23,12 @@ class FrameCaptureProcessor(VideoProcessorBase):
     def _processing_loop(self):
         while not self.stop_event.is_set():
             frame_to_process = None
+
             with self.lock:
                 if self.latest_frame is not None:
                     frame_to_process = self.latest_frame.copy()
-            if frame_to_process is not None and frame_to_process.size > 0:
+
+            if frame_to_process is not None:
                 try:
                     yolo_results = self.yolo_model.track(frame_to_process)
                     with self.lock:
@@ -35,17 +37,21 @@ class FrameCaptureProcessor(VideoProcessorBase):
                     print(f"YOLO processing error: {e}")
                     with self.lock:
                         self.latest_boxes = None
-                time.sleep(0.1)
+
+            time.sleep(0.1)
 
     def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+        img_bgr = frame.to_ndarray(format="bgr24")
+
         with self.lock:
-            self.latest_frame = img.copy()
+            self.latest_frame = img_bgr.copy()
             boxes = self.latest_boxes
+
         if self.yolo_model and boxes is not None:
-            frame_with_boxes = self.yolo_model.draw_boxes(img, boxes)
-            frame = av.VideoFrame.from_ndarray(frame_with_boxes, format="bgr24")
-        return frame
+            frame_with_boxes = self.yolo_model.draw_boxes(img_bgr, boxes)
+            return av.VideoFrame.from_ndarray(frame_with_boxes, format="bgr24")
+        else:
+            return av.VideoFrame.from_ndarray(img_bgr, format="bgr24")
 
     def get_latest_frame(self):
         with self.lock:
@@ -68,3 +74,4 @@ class FrameCaptureProcessor(VideoProcessorBase):
         with self.lock:
             self.latest_frame = None
             self.latest_boxes = None
+

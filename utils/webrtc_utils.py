@@ -11,19 +11,27 @@ class FrameCaptureProcessor(VideoProcessorBase):
         self.yolo_model = yolo_model
         if self.yolo_model:
             self.counter = 0
-            self.skip_frames = 10
+            self.skip_frames = 60
             self.latest_boxes = None
+            self.processing = False
 
     def recv(self, frame):
         img = frame.to_ndarray(format="rgb24")
         with self.lock:
             self.latest_frame = img.copy()
-        if self.yolo_model:
+        if self.yolo_model and not self.processing:
             img_bgr = img[..., ::-1].copy()
             self.counter += 1
             if self.counter % self.skip_frames == 0:
-                yolo_results = self.yolo_model.track(img_bgr)
-                self.latest_boxes = yolo_results[0]
+                self.processing = True
+                try:
+                    yolo_results = self.yolo_model.track(img_bgr)
+                    self.latest_boxes = yolo_results[0]
+                except Exception as e:
+                    print(f"YOLO error: {e}")
+                    pass
+                finally:
+                    self.processing = False
             if self.latest_boxes is not None:
                 frame_np = self.yolo_model.draw_boxes(img_bgr, self.latest_boxes)
                 frame = av.VideoFrame.from_ndarray(frame_np, format="rgb24")

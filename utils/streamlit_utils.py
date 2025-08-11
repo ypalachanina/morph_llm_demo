@@ -6,7 +6,7 @@ from utils.secrets_utils import get_secrets
 from utils.webrtc_utils import FrameCaptureProcessor
 from utils.storage_utils import list_azure_videos, get_video_url
 from utils.audio_utils import text_to_speech, audio_to_base64
-from utils.cv_utils import capture_frame, parse_timestamp, image_to_bytes
+from utils.cv_utils import load_yolo_model, capture_frame, parse_timestamp, image_to_bytes
 from utils.llm_utils import get_audio_description
 
 
@@ -23,6 +23,8 @@ def init_session(session, host):
             session[k] = v
     session["host"] = host
     session["secrets"] = get_secrets(host)
+    if session["run_yolo"]:
+        session["yolo_model"] = load_yolo_model()
 
 
 def display_sidebar(session):
@@ -51,11 +53,11 @@ def display_sidebar(session):
 
 
 def camera_mode(session):
+    yolo_model = session.get("yolo_model", None)
     st.markdown("## 📸 Live Camera Input")
-    run_yolo = session["run_yolo"]
     webrtc_ctx = webrtc_streamer(
         key="camera_streamer",
-        video_processor_factory=lambda: FrameCaptureProcessor(run_yolo=run_yolo),
+        video_processor_factory=lambda: FrameCaptureProcessor(yolo_model),
         media_stream_constraints={"video": True, "audio": False},
         async_processing=True,
     )
@@ -115,9 +117,6 @@ def process_audio(session, video_processor=None):
         image = None
         if session["mode"] == "video":
             image = capture_frame(session.get("video_url"), session.get("tms"))
-            if image is None:
-                st.error("Failed to capture frame from video at the specified timestamp")
-                return
         elif session["mode"] == "camera":
             if video_processor is None:
                 st.error("Camera processor is not active. Please start the camera.")

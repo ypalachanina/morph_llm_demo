@@ -33,7 +33,7 @@ class FrameCaptureProcessor(VideoProcessorBase):
                         print(f"YOLO processing error: {e}")
                         with self.lock:
                             self.latest_boxes = None
-            time.sleep(0.05)
+            time.sleep(0.1)
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")
@@ -41,8 +41,7 @@ class FrameCaptureProcessor(VideoProcessorBase):
             self.latest_frame = img.copy()
             boxes = self.latest_boxes
         if self.yolo_model and boxes:
-            img_bgr = img.copy()[..., ::-1]
-            frame_with_boxes = self.yolo_model.draw_boxes(img_bgr, boxes)
+            frame_with_boxes = self.yolo_model.draw_boxes(img, boxes)
             frame = av.VideoFrame.from_ndarray(frame_with_boxes, format="bgr24")
         return frame
 

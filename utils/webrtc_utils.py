@@ -22,18 +22,20 @@ class FrameCaptureProcessor(VideoProcessorBase):
 
     def _processing_loop(self):
         while not self.stop_event.is_set():
+            frame_to_process = None
             with self.lock:
                 if self.latest_frame is not None:
                     frame_to_process = self.latest_frame.copy()
-                    try:
-                        yolo_results = self.yolo_model.track(frame_to_process)
-                        with self.lock:
-                            self.latest_boxes = yolo_results[0]
-                    except Exception as e:
-                        print(f"YOLO processing error: {e}")
-                        with self.lock:
-                            self.latest_boxes = None
-            time.sleep(0.1)
+            if frame_to_process:
+                try:
+                    yolo_results = self.yolo_model.track(frame_to_process)
+                    with self.lock:
+                        self.latest_boxes = yolo_results[0]
+                except Exception as e:
+                    print(f"YOLO processing error: {e}")
+                    with self.lock:
+                        self.latest_boxes = None
+                time.sleep(0.1)
 
     def recv(self, frame):
         img = frame.to_ndarray(format="bgr24")

@@ -16,12 +16,10 @@ class FrameCaptureProcessor(VideoProcessorBase):
             self.conf = 0.5
             self.img_size = 320
             self.counter = -1
-            self.skip_frames = 10
+            self.skip_frames = 5
 
     def recv(self, frame):
         img = frame.to_ndarray(format="rgb24")
-        with self.lock:
-            self.latest_frame = img
         if self.run_yolo:
             self.counter += 1
             if self.counter % self.skip_frames == 0:
@@ -35,10 +33,14 @@ class FrameCaptureProcessor(VideoProcessorBase):
                 )
                 frame_np = yolo_results[0].plot()[..., ::-1]
                 frame = av.VideoFrame.from_ndarray(frame_np, format="rgb24")
-                self.latest_frame = frame
+                with self.lock:
+                    self.latest_frame = frame
             return self.latest_frame
-        return frame
+        else:
+            with self.lock:
+                self.latest_frame = img
+            return frame
 
     def get_latest_frame(self):
         with self.lock:
-            return self.latest_frame
+            return self.latest_frame.copy()

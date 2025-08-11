@@ -1,23 +1,18 @@
 from io import BytesIO
 import base64
 import azure.cognitiveservices.speech as speechsdk
-import os
-import streamlit as st
-
-# TTS_KEY = os.environ.get("TTS_KEY")
-# TTS_KEY = os.getenv("TTS_KEY")
-TTS_KEY = st.secrets["TTS_KEY"]
-TTS_REGION = "westeurope"
 
 
-def text_to_speech(text, language):
+def text_to_speech(session, text):
     voices = {
         "English": "en-GB-RyanNeural",
         "Nederlands": "nl-NL-FennaNeural",
         "Vlaams": "nl-BE-DenaNeural"
     }
-
-    config = speechsdk.SpeechConfig(subscription=TTS_KEY, region=TTS_REGION)
+    key = session["secrets"]["TTS_KEY"]
+    region = session["secrets"]["TTS_REGION"]
+    config = speechsdk.SpeechConfig(subscription=key, region=region)
+    language = session["language"]
     config.speech_synthesis_voice_name = voices[language]
 
     synthesizer = speechsdk.SpeechSynthesizer(

@@ -3,23 +3,19 @@ import streamlit as st
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from datetime import datetime, timedelta
 
-# CONNECTION_STRING = os.environ.get("CONNECTION_STRING")
-# CONNECTION_STRING = os.getenv("CONNECTION_STRING")
-CONNECTION_STRING = st.secrets["CONNECTION_STRING"]
 
-
-def get_blob_container_client():
+def get_blob_container_client(session):
     container_name = "videos"
-    blob_service_client = BlobServiceClient.from_connection_string(CONNECTION_STRING)
+    connection_string = session["secrets"]["CONNECTION_STRING"]
+    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_client = blob_service_client.get_container_client(container_name)
     return container_client
 
 
-@st.cache_data(ttl=300)
-def list_azure_videos():
+def list_azure_videos(session):
     video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv']
     videos = {}
-    container_client = get_blob_container_client()
+    container_client = get_blob_container_client(session)
     blob_list = container_client.list_blobs(name_starts_with="streamlit_videos/")
     for blob in blob_list:
         if any(blob.name.lower().endswith(ext) for ext in video_extensions):
@@ -35,11 +31,12 @@ def list_azure_videos():
     return videos
 
 
-def get_video_url(blob_name):
+def get_video_url(session, blob_name):
     try:
-        container_client = get_blob_container_client()
+        container_client = get_blob_container_client(session)
         conn_dict = {}
-        for part in CONNECTION_STRING.split(';'):
+        connection_string = session["secrets"]["CONNECTION_STRING"]
+        for part in connection_string.split(';'):
             if '=' in part:
                 key, value = part.split('=', 1)
                 conn_dict[key] = value

@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from audiorecorder import audiorecorder
 from streamlit_webrtc import webrtc_streamer
+from utils.secrets_utils import get_secrets
 from utils.webrtc_utils import FrameCaptureProcessor
 from utils.storage_utils import list_azure_videos, get_video_url
 from utils.audio_utils import text_to_speech, audio_to_base64
@@ -9,7 +10,7 @@ from utils.cv_utils import capture_frame, parse_timestamp, image_to_bytes
 from utils.llm_utils import get_audio_description
 
 
-def init_session(session):
+def init_session(session, host):
     defaults = {
         "video_name": None,
         "video_url": None,
@@ -20,6 +21,8 @@ def init_session(session):
     for k, v in defaults.items():
         if k not in session:
             session[k] = v
+    session["host"] = host
+    session["secrets"] = get_secrets(host)
 
 
 def display_sidebar(session):
@@ -64,7 +67,7 @@ def camera_mode(session):
 
 
 def video_mode(session):
-    videos = list_azure_videos()
+    videos = list_azure_videos(session)
     if not videos:
         st.error("No videos found in Azure storage")
         return
@@ -82,7 +85,7 @@ def video_mode(session):
             session["video_name"] = video_name
             video = videos[video_name]
             st.sidebar.markdown(f"## Selected {video['desc']}")
-            video_url = get_video_url(video["name"])
+            video_url = get_video_url(session, video["name"])
             if video_url:
                 session["video_url"] = video_url
             else:
@@ -133,10 +136,10 @@ def process_audio(session, video_processor=None):
 
         with st.spinner("Preparing reply..."):
             audio_base64 = audio_to_base64(audio)
-            desc = get_audio_description(img_bytes, audio_base64, session["model_name"], session["language"])
+            desc = get_audio_description(session, img_bytes, audio_base64)
             st.markdown(desc)
             if desc:
-                response_bytes, response_base64 = text_to_speech(desc, session["language"])
+                response_bytes, response_base64 = text_to_speech(session, desc)
                 if response_base64:
                     st.audio(response_bytes, format="audio/wav", start_time=0)
                     audio_html = f"""

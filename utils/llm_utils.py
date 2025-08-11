@@ -1,16 +1,13 @@
 from google import genai
 from google.genai import types
 from utils.prompts import PROMPT_ASSIST
-import os
-import streamlit as st
-
-# GEMINI_KEY = os.environ.get("GEMINI_KEY")
-# GEMINI_KEY = os.getenv("GEMINI_KEY")
-GEMINI_KEY = st.secrets["GEMINI_KEY"]
-client = genai.Client(api_key=GEMINI_KEY)
 
 
-def get_audio_description(image_data, audio_base64, model_name, language='English'):
+def get_audio_description(session, image_data, audio_base64):
+    key = session["secrets"]["GEMINI_KEY"]
+    client = genai.Client(api_key=key)
+    model_name = session["model_name"]
+    language = session["language"]
     full_prompt = f"""
         {PROMPT_ASSIST}
         Response to user question (audio) based on the image provided.

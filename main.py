@@ -7,10 +7,11 @@ from utils.streamlit_utils import init_session, display_sidebar, video_mode, cam
 
 
 def run_app():
+    host = "streamlit"
     st.set_page_config(page_title="Morpheus LLM PoC", page_icon="👓")
     st.title("Morpheus LLM PoC")
     session = st.session_state
-    init_session(session)
+    init_session(session, host)
     try:
         display_sidebar(session)
         if session["mode"] == 'video':

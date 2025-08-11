@@ -37,7 +37,7 @@ class YOLOModel:
         )
 
     def draw_boxes(self, img, results):
-        img = img.copy()[..., ::-1]
+        # img = img.copy()[..., ::-1]
         for box in results.boxes:
             # show bounding boxes
             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)

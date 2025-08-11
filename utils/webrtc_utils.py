@@ -14,7 +14,6 @@ class FrameCaptureProcessor(VideoProcessorBase):
 
         self.processing_thread = None
         self.stop_event = threading.Event()
-
         if self.yolo_model:
             self.stop_event.clear()
             self.processing_thread = threading.Thread(target=self._processing_loop)
@@ -38,9 +37,9 @@ class FrameCaptureProcessor(VideoProcessorBase):
                     with self.lock:
                         self.latest_boxes = None
 
-            time.sleep(0.1)
+            time.sleep(0.2)
 
-    def recv(self, frame):
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
         img_bgr = frame.to_ndarray(format="bgr24")
 
         with self.lock:
@@ -60,18 +59,10 @@ class FrameCaptureProcessor(VideoProcessorBase):
             return None
 
     def release(self):
-        """
-        This method is called when the stream is stopped.
-        It's used for cleanup.
-        """
         if self.processing_thread and self.processing_thread.is_alive():
-            # Signal the processing thread to stop
             self.stop_event.set()
-            # Wait for the thread to finish
             self.processing_thread.join()
 
-        # Reset resources
         with self.lock:
             self.latest_frame = None
             self.latest_boxes = None
-

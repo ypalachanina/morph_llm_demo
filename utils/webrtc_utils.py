@@ -26,7 +26,7 @@ class FrameCaptureProcessor(VideoProcessorBase):
             with self.lock:
                 if self.latest_frame is not None:
                     frame_to_process = self.latest_frame.copy()
-            if frame_to_process is not None:
+            if frame_to_process is not None and frame_to_process.size > 0:
                 try:
                     yolo_results = self.yolo_model.track(frame_to_process)
                     with self.lock:

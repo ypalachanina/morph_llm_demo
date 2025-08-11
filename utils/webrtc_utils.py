@@ -37,9 +37,9 @@ class FrameCaptureProcessor(VideoProcessorBase):
                     with self.lock:
                         self.latest_boxes = None
 
-            time.sleep(0.2)
+            time.sleep(0.5)
 
-    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+    def recv(self, frame):
         img_bgr = frame.to_ndarray(format="bgr24")
 
         with self.lock:

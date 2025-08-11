@@ -59,6 +59,9 @@ def camera_mode(session):
         key="camera_streamer",
         video_processor_factory=lambda: FrameCaptureProcessor(yolo_model),
         media_stream_constraints={"video": True, "audio": False},
+        rtc_configuration={
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        },
         async_processing=True,
     )
 

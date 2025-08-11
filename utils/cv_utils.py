@@ -8,7 +8,7 @@ import streamlit as st
 
 
 class YOLOModel:
-    def __init__(self, model_name='yolo11m.pt'):
+    def __init__(self, model_name='yolo11n.pt'):
         self.yolo_model = YOLO(model_name)
         self.tracker = "bytetrack.yaml"
         self.conf = 0.3

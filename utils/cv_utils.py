@@ -12,7 +12,7 @@ class YOLOModel:
         self.yolo_model = YOLO(model_name)
         self.tracker = "bytetrack.yaml"
         self.conf = 0.3
-        self.img_size = 640
+        self.img_size = 320
         self.classes = self.yolo_model.names
         self.colors = self.generate_colors()
 

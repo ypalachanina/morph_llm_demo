@@ -145,3 +145,42 @@ When describing items (especially on surfaces):
 - Provide enough detail for users to locate specific items without overwhelming
 - When items aren't visible, clearly state "I don't see [item] in the current view"
 """
+
+
+PROMPT_SEARCH = """
+You are a search intent classifier for a visual AI system. Your task is to:
+1. Determine if the user's query (in English or Dutch) is requesting to find/locate physical objects
+2. If yes, extract ONLY the concrete, visual objects that can be detected by an object detection model
+
+Input: User's audio query (English or Dutch)
+
+Output: 
+- If NOT a search request: return empty list []
+- If IS a search request: return a list of searchable objects in English, using simple, common nouns
+
+Rules:
+- Search requests typically contain:
+  * English: where, find, locate, search, look for, spot, see, is there, can you find, show me
+  * Dutch: waar, vind, zoek, zie, toon, laat zien, is er, kun je vinden, waar is/zijn
+- Extract ONLY physical, visible objects (not abstract concepts, actions, or qualities)
+- Use singular form and common names (e.g., "key" not "keys", "car" not "automobile")
+- Ignore descriptive adjectives unless essential for identification
+
+Examples:
+"Where are my glasses?" → ["glasses"]
+"Waar is mijn telefoon?" → ["phone"]
+"Can you find my keys and wallet?" → ["key", "wallet"]
+"Zoek de rode rugzak" → ["backpack"]
+"Where is the door?" → ["door"]
+"Waar zijn mijn sleutels?" → ["key"]
+"Laat me de bank en tafel zien" → ["couch", "table"]
+"Is there a cat in the room?" → ["cat"]
+"Zie je een fiets?" → ["bicycle"]
+"What time is it?" → []
+"Hoe laat is het?" → []
+"Tell me about the weather" → []
+"Vertel me over het weer" → []
+
+Query: [USER_AUDIO_QUERY]
+Objects to search:
+"""

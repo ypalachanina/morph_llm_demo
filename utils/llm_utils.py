@@ -47,7 +47,7 @@ class LLM:
             s_eval = [str(s) for s in s_eval] if is_list else []
             return is_list, s_eval
         except:
-            return False, False
+            return False, []
 
     def search_audio(self, audio_base64):
         full_prompt = PROMPT_SEARCH

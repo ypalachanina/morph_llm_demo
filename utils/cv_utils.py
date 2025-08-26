@@ -76,6 +76,8 @@ class YOLOModel:
         return img
 
     def run_yoloe(self, img, class_names):
+        if not class_names:
+            return None
         yoloe_model = YOLOE(self.yoloe_model_name)
         yoloe_model.set_classes(class_names, yoloe_model.get_text_pe(class_names))
         results = yoloe_model.predict(img, imgsz=self.imgsz)
@@ -103,18 +105,24 @@ class YOLOModel:
         for r in results:
             mask = r['mask']
             mask = cv2.resize(mask, (w, h))
+            mask = cv2.GaussianBlur(mask, (31, 31), 0)
 
             x1, y1, x2, y2 = r['bbox']
             label = r['class_name']
             color, text_color = r['color']
             # cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-            (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-            cv2.rectangle(img, (x1, y1), (x1 + label_width, y1 + label_height + 4), color, -1)
-            cv2.putText(img, label, (x1, y1 + label_height), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 1)
 
             mask_bool = mask > self.yoloe_thr
             mask_color = np.full_like(img[mask_bool], color)
             img[mask_bool] = cv2.addWeighted(img[mask_bool], 0.5, mask_color, 0.5, 0)
+
+            border_mask = (mask_bool).astype(np.uint8) * 255
+            contours, _ = cv2.findContours(border_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.drawContours(img, contours, -1, (255, 255, 255), 3)
+
+            (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.rectangle(img, (x1, y1), (x1 + label_width, y1 + label_height + 4), color, -1)
+            cv2.putText(img, label, (x1, y1 + label_height), cv2.FONT_HERSHEY_SIMPLEX, 0.5, text_color, 1)
         return img
 
 

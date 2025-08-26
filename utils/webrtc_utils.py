@@ -14,38 +14,57 @@ class FrameCaptureProcessor(VideoProcessorBase):
         self.lock = threading.Lock()
         self.latest_frame = None
         self.latest_boxes = None
-
-        self.seg_results = None
+        self.seg_classes = None
+        self.latest_seg_results = None
         self.seg_timestamp = None
-        self.seg_duration = 10
+        self.seg_duration = 20  # seconds
 
         self.processing_thread = None
         self.stop_event = threading.Event()
-        if self.show_bb:
-            self.stop_event.clear()
-            self.processing_thread = threading.Thread(target=self._processing_loop)
-            self.processing_thread.start()
+        self.stop_event.clear()
+        self.processing_thread = threading.Thread(target=self._processing_loop)
+        self.processing_thread.start()
 
     def _processing_loop(self):
         while not self.stop_event.is_set():
             frame_to_process = None
+            local_show_bb = False
+            local_seg_classes = None
+
             with self.lock:
                 if self.latest_frame is not None:
                     frame_to_process = self.latest_frame.copy()
+                local_show_bb = self.show_bb
+                local_seg_classes = self.seg_classes
+
             if frame_to_process is not None:
                 try:
-                    yolo_results = self.yolo_model.track(frame_to_process)
-                    with self.lock:
-                        self.latest_boxes = yolo_results[0]
+                    if local_show_bb:
+                        yolo_results = self.yolo_model.track(frame_to_process)
+                        with self.lock:
+                            self.latest_boxes = yolo_results[0]
+                    else:
+                        with self.lock:
+                            self.latest_boxes = None
+
+                    if local_seg_classes:
+                        segmentation_results = self.yolo_model.run_yoloe(frame_to_process, local_seg_classes)
+                        with self.lock:
+                            self.latest_seg_results = segmentation_results
+                    else:
+                        with self.lock:
+                            self.latest_seg_results = None
                 except Exception as e:
                     st.error(f"YOLO processing error: {e}")
                     with self.lock:
                         self.latest_boxes = None
-            time.sleep(0.1)
+                        self.latest_seg_results = None
+            time.sleep(0.01)
 
-    def set_segmentation_results(self, seg_results):
+    def set_seg_classes(self, seg_classes):
         with self.lock:
-            self.seg_results = seg_results
+            self.seg_classes = seg_classes
+            self.latest_seg_results = None
             self.seg_timestamp = time.time()
 
     def _draw_text_overlay(self, img, text):
@@ -79,18 +98,23 @@ class FrameCaptureProcessor(VideoProcessorBase):
         with self.lock:
             self.latest_frame = img.copy()
             boxes = self.latest_boxes
-            seg_results = self.seg_results
+            seg_results = self.latest_seg_results
+            seg_classes = self.seg_classes
             seg_time = self.seg_timestamp
+
         if self.show_bb and boxes is not None:
             img = self.yolo_model.draw_boxes(img, boxes)
-        if seg_results and seg_time:
+
+        if seg_classes and seg_results is not None and seg_time is not None:
             elapsed_time = time.time() - seg_time
             if elapsed_time <= self.seg_duration:
                 img = self._draw_segmentation(img, seg_results)
             else:
                 with self.lock:
-                    self.seg_results = None
+                    self.seg_classes = None
+                    self.latest_seg_results = None
                     self.seg_timestamp = None
+
         frame = av.VideoFrame.from_ndarray(img, format="rgb24")
         return frame
 
@@ -108,3 +132,4 @@ class FrameCaptureProcessor(VideoProcessorBase):
         with self.lock:
             self.latest_frame = None
             self.latest_boxes = None
+            self.latest_seg_results = None

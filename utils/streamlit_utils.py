@@ -13,7 +13,7 @@ from utils.llm_utils import LLM
 
 MODEL_WEIGHTS = {
     "yolo_model": "yolo11n.pt",
-    "yoloe_model": "yoloe-11l-seg.pt",
+    "yoloe_model": "yoloe-11s-seg.pt",
     "clip_model": "mobileclip_blt.ts"
 }
 
@@ -147,31 +147,28 @@ class StreamlitUI:
         img_bytes = image_to_bytes(image)
         return image, img_bytes
 
-    def search_objects(self, llm_model, yolo_model, image, audio_base64):
+    def search_objects(self, llm_model, audio_base64):
         is_list, objects, resp = llm_model.search_audio(audio_base64)
-        seg_res = yolo_model.run_yoloe(image, objects) if objects else None
-        return is_list, objects, resp, seg_res
+        return is_list, objects, resp
 
     def process_parallel(self, audio, image, img_bytes):
         output = {}
         audio_base64 = audio_to_base64(audio)
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             llm_model = self.session["LLM"]
-            yolo_model = self.session["yolo_model"]
             search_future = executor.submit(
                 self.search_objects,
-                llm_model, yolo_model, image, audio_base64
+                llm_model, audio_base64
             )
             description_future = executor.submit(
                 llm_model.get_image_audio_description,
                 img_bytes, audio_base64
             )
             try:
-                is_list, objects, resp, seg_res = search_future.result()
+                is_list, objects, resp = search_future.result()
                 if not is_list:
                     output["warning"] = f"Output is not list! Response: {resp}"
                 output["objects"] = objects
-                output["segmentation"] = seg_res
                 output["desc"] = description_future.result()
             except Exception as e:
                 output["error"] = f"Error during LLM processing: {e}"
@@ -197,10 +194,11 @@ class StreamlitUI:
                     return
                 if "warning" in output:
                     st.warning(output["warning"])
-                objects, seg_res = output["objects"], output["segmentation"]
+                objects = output["objects"]
+
                 desc = output["desc"]
                 st.markdown(f"Objects: {objects}")
-                self.video_processor.set_segmentation_results(seg_res)
+                self.video_processor.set_seg_classes(objects)
                 # self.video_processor.set_display_text(str(objects))
                 st.markdown(desc)
                 response_bytes, response_base64 = text_to_speech(self.session, output['desc'])

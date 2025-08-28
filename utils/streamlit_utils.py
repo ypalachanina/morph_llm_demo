@@ -13,7 +13,7 @@ from utils.llm_utils import LLM
 
 MODEL_WEIGHTS = {
     "yolo_model": "yolo11n.pt",
-    "yoloe_model": "yoloe-11s-seg.pt",
+    "yoloe_model": "yoloe-11l-seg.pt",
     "clip_model": "mobileclip_blt.ts"
 }
 

@@ -31,7 +31,8 @@ class StreamlitUI:
             "mode": "camera",
             "current_frame": None,
             "show_bb": False,
-            "dynamic_segmentation": False
+            "dynamic_segmentation": False,
+            "language": "English"
         }
         for k, v in defaults.items():
             if k not in self.session:
@@ -61,7 +62,9 @@ class StreamlitUI:
         st.sidebar.markdown("## Response Language:")
         language = st.sidebar.selectbox("Select Language", LANGUAGES,
                                         label_visibility="collapsed")
-        self.session["language"] = language
+        if language != self.session["language"]:
+            self.session["language"] = language
+            st.rerun()
         self.session["model_name"] = "gemini-2.5-flash"
         self.session["LLM"] = LLM(self.session)
         if self.session["mode"] == "camera":

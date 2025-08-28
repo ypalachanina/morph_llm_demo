@@ -86,7 +86,6 @@ class FrameCaptureProcessor(VideoProcessorBase):
 
         if self.show_bb and boxes is not None:
             img = self.yolo_model.draw_boxes(img, boxes)
-        print(seg_classes, seg_results, seg_time)
         if seg_classes and seg_results is not None and seg_time is not None:
             elapsed_time = time.time() - seg_time
             if elapsed_time <= self.seg_duration:

@@ -16,6 +16,7 @@ MODEL_WEIGHTS = {
     "yoloe_model": "yoloe-11l-seg.pt",
     "clip_model": "mobileclip_blt.ts"
 }
+LANGUAGES = ["English", "Nederlands", "Vlaams", "Deutsch", "Français"]
 
 
 class StreamlitUI:
@@ -58,7 +59,7 @@ class StreamlitUI:
                 st.rerun()
 
         st.sidebar.markdown("## Response Language:")
-        language = st.sidebar.selectbox("Select Language", ["English", "Nederlands", "Vlaams"],
+        language = st.sidebar.selectbox("Select Language", LANGUAGES,
                                         label_visibility="collapsed")
         self.session["language"] = language
         self.session["model_name"] = "gemini-2.5-flash"

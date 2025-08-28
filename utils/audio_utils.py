@@ -7,7 +7,9 @@ def text_to_speech(session, text):
     voices = {
         "English": "en-GB-RyanNeural",
         "Nederlands": "nl-NL-FennaNeural",
-        "Vlaams": "nl-BE-DenaNeural"
+        "Vlaams": "nl-BE-DenaNeural",
+        "Deutsch": "de-DE-SeraphinaMultilingualNeural",
+        "Français": "fr-FR-VivienneMultilingualNeural"
     }
     key = session["secrets"]["TTS_KEY"]
     region = session["secrets"]["TTS_REGION"]

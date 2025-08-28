@@ -29,7 +29,8 @@ class StreamlitUI:
             "video_url": None,
             "mode": "camera",
             "current_frame": None,
-            "show_bb": False
+            "show_bb": False,
+            "dynamic_segmentation": False
         }
         for k, v in defaults.items():
             if k not in self.session:
@@ -67,6 +68,10 @@ class StreamlitUI:
             if show_bb != self.session["show_bb"]:
                 self.session["show_bb"] = show_bb
                 st.rerun()
+            dynamic_segmentation = st.sidebar.checkbox("Dynamic Segmentation", value=self.session["dynamic_segmentation"])
+            if dynamic_segmentation != self.session["dynamic_segmentation"]:
+                self.session["dynamic_segmentation"] = dynamic_segmentation
+                st.rerun()
 
     def start_app(self):
         if self.session["mode"] == 'video':
@@ -77,11 +82,12 @@ class StreamlitUI:
     def camera_mode(self):
         yolo_model = self.session["yolo_model"]
         show_bb = self.session["show_bb"]
+        dynamic_segmentation = self.session["dynamic_segmentation"]
 
         st.markdown("## 📸 Live Camera Input")
         webrtc_ctx = webrtc_streamer(
             key="camera_streamer",
-            video_processor_factory=lambda: FrameCaptureProcessor(yolo_model, show_bb),
+            video_processor_factory=lambda: FrameCaptureProcessor(yolo_model, show_bb, dynamic_segmentation),
             media_stream_constraints={"video": True, "audio": False},
             rtc_configuration={
                 "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
@@ -151,27 +157,12 @@ class StreamlitUI:
         is_list, objects, resp = llm_model.search_audio(audio_base64)
         return is_list, objects, resp
 
-    def process_parallel(self, audio, image, img_bytes):
-        output = {}
+    def process_llm(self, audio, img_bytes):
         audio_base64 = audio_to_base64(audio)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-            llm_model = self.session["LLM"]
-            search_future = executor.submit(
-                self.search_objects,
-                llm_model, audio_base64
-            )
-            description_future = executor.submit(
-                llm_model.get_image_audio_description,
-                img_bytes, audio_base64
-            )
-            try:
-                is_list, objects, resp = search_future.result()
-                if not is_list:
-                    output["warning"] = f"Output is not list! Response: {resp}"
-                output["objects"] = objects
-                output["desc"] = description_future.result()
-            except Exception as e:
-                output["error"] = f"Error during LLM processing: {e}"
+        try:
+            output = self.session["LLM"].get_full_response(img_bytes, audio_base64)
+        except Exception as e:
+            output = {"error": f"Error during LLM processing: {e}"}
         return output
 
     def process_audio_and_image(self) -> None:
@@ -188,20 +179,23 @@ class StreamlitUI:
             with col_audio:
                 st.audio(audio.export().read())
             with st.spinner("Processing audio and image..."):
-                output = self.process_parallel(audio, image, img_bytes)
+                output = self.process_llm(audio, img_bytes)
+                # st.info(f"Raw response: {output['raw_response']}")
                 if "error" in output:
                     st.error(output["error"])
                     return
                 if "warning" in output:
                     st.warning(output["warning"])
-                objects = output["objects"]
-
-                desc = output["desc"]
+                response_text = output["response_text"]
+                objects = output["object_list"]
                 st.markdown(f"Objects: {objects}")
-                self.video_processor.set_seg_classes(objects)
-                # self.video_processor.set_display_text(str(objects))
-                st.markdown(desc)
-                response_bytes, response_base64 = text_to_speech(self.session, output['desc'])
+                if not self.session["dynamic_segmentation"]:
+                    seg_results = self.session["yolo_model"].run_yoloe(image, objects)
+                else:
+                    seg_results = None
+                self.video_processor.set_seg_classes(objects, seg_results)
+                st.markdown(response_text)
+                response_bytes, response_base64 = text_to_speech(self.session, response_text)
                 if response_base64:
                     st.audio(response_bytes, format="audio/wav", start_time=0)
                     audio_html = f"""
